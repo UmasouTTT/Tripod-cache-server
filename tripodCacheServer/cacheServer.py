@@ -51,10 +51,10 @@ def load_partial_object(key, range, stage_id, partition_id):
     start_time = time()
     bytes_range = 'bytes=' + range
     print("Start access object: {} _ {}".format(key, range))
-    req = client.get_object(Bucket=bucket_name, Key=key, Range=bytes_range)
+    client.get_object(Bucket=bucket_name, Key=key, Range=bytes_range)
     end_time = time()
     stage_cached_partition[stage_id].append(partition_id)
-    print("Access result: {}, use time : {}".format(req, end_time - start_time))
+    # print("Access result: {}, use time : {}".format(req, end_time - start_time))
 
 
 def start(prefetch_files, num_of_stages):
