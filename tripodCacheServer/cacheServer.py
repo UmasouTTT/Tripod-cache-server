@@ -70,8 +70,8 @@ def get_prefetch_files(file_path):
     f = open(file_path, "r+", encoding="utf8")
     prefetch_files = []
     for line in f:
-        content = line.split(":")
-        file_name = content[0]
+        content = line.strip().split(":")
+        file_name = content[0].split("/")[-1]
         partition_id = content[1]
         range = content[2]
         start = int(range.split("-")[0])
@@ -84,7 +84,7 @@ def get_prefetch_files(file_path):
 if Query_type == 1:
     # # prefetch_files: [[filename, stage_id, range, partition_id]...]
     num_of_stages = 4
-    file_path = "./datas/1/partition_inf"
+    file_path = "../generate_simulate_data/datas/1/partition_inf"
     prefetch_files = get_prefetch_files(file_path)
     start(prefetch_files, 4)
     print(stage_cached_partition)
