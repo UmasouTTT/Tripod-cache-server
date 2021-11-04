@@ -47,14 +47,13 @@ def load_file(file_path):
         fcntl.flock(f, fcntl.LOCK_UN)
     f.close()
 
-def load_partial_object(key, range, stage_id, partition_id):
-
-    # range: 1-100
-    start_time = time()
-    bytes_range = 'bytes=' + range
+def load_partial_object(key, range_start, end, stage_id, partition_id):
     print("Start access object: {} _ {}".format(key, range))
-    client.get_object(Bucket=bucket_name, Key=key, Range=bytes_range)
-    end_time = time()
+    for i in range(math.ceil((end - start)/piece_of_file)):
+        _start = range_start + i * piece_of_file
+        _end = min(_start + piece_of_file, end)
+        bytes_range = 'bytes=' + str(_start) + "-" + str(_end)
+        client.get_object(Bucket=bucket_name, Key=key, Range=bytes_range)
     stage_cached_partition[stage_id].append(partition_id)
     # print("Access result: {}, use time : {}".format(req, end_time - start_time))
 
@@ -64,9 +63,10 @@ def start(prefetch_files, num_of_stages):
     for prefetch_plan in prefetch_files:
         file_name = prefetch_plan[0]
         stage_id = prefetch_plan[1]
-        partition_id = prefetch_plan[3]
-        range_name = prefetch_plan[2]
-        load_partial_object(file_name, range_name, stage_id, partition_id)
+        start = prefetch_plan[2]
+        end = prefetch_plan[3]
+        partition_id = prefetch_plan[4]
+        load_partial_object(file_name, start, end, stage_id, partition_id)
 
 def get_prefetch_files(file_path):
     f = open(file_path, "r+", encoding="utf8")
@@ -78,18 +78,13 @@ def get_prefetch_files(file_path):
         range = content[2]
         start = int(range.split("-")[0])
         length = int(range.split("-")[1])
-        max_end = start + length
-        for i in range(math.ceil(length / piece_of_file)):
-            start += i * piece_of_file
-            end = min(start + piece_of_file, max_end)
-            prefetch_files.append([file_name, 0, "{}-{}".format(start, end), partition_id])
-
-
+        end = start + length
+        prefetch_files.append([file_name, 0, start, end, partition_id])
     f.close()
     return prefetch_files
 
 if Query_type == 1:
-    # # prefetch_files: [[filename, stage_id, range, partition_id]...]
+    # # prefetch_files: [[filename, stage_id, start, end, partition_id]...]
     num_of_stages = 4
     file_path = "../generate_simulate_data/datas/1/partition_inf"
     prefetch_files = get_prefetch_files(file_path)
