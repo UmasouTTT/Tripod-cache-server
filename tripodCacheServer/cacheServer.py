@@ -1,3 +1,5 @@
+import math
+
 import boto3
 import fcntl
 from time import *
@@ -18,7 +20,7 @@ client = boto3.client(service_name='s3', aws_access_key_id=access_key, aws_secre
 stage_cached_partition = []
 prefetch_plan = None
 
-
+piece_of_file = 4194304
 
 
 # prefetch_files: [[filename, stage_id, range, partition_id]...]
@@ -76,8 +78,13 @@ def get_prefetch_files(file_path):
         range = content[2]
         start = int(range.split("-")[0])
         length = int(range.split("-")[1])
-        end = start + length
-        prefetch_files.append([file_name, 0, "{}-{}".format(start, end), partition_id])
+        max_end = start + length
+        for i in range(math.ceil(length / piece_of_file)):
+            start += i * piece_of_file
+            end = min(start + piece_of_file, max_end)
+            prefetch_files.append([file_name, 0, "{}-{}".format(start, end), partition_id])
+
+
     f.close()
     return prefetch_files
 
