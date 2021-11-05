@@ -1,4 +1,5 @@
 import os
+from makeTripodInput import *
 
 
 
@@ -88,9 +89,10 @@ def extract_task_duration(file_path, is_remote):
 
 
 query_index = 1
-
 # {filename:{partition_id:range}}
 partition_inf_path = "datas/{}/partition_inf".format(query_index)
 tasks_duration_path = "datas/{}/tasks_duration".format(query_index)
-extractPartialFiles("log.txt")
-extract_task_duration("log.txt", True)
+extractPartialFiles("datas/{}/log.txt".format(query_index))
+extract_task_duration("datas/{}/log.txt".format(query_index), True)
+extract_task_duration("datas/{}/log_cached.txt".format(query_index), False)
+make_Tripod_input(query_index)
