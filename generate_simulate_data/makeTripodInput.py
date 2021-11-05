@@ -22,13 +22,16 @@ def make_Tripod_input(i):
         file_name = content[0]
         _range = content[-1]
         _start = int(_range.split("-")[0])
+        task_size = int(_range.split("-")[1])
         _end = _start + int(_range.split("-")[1])
         if file_name not in partition_inf:
             partition_inf[file_name] = {}
             partition_inf[file_name]["start"] = sys.maxsize
             partition_inf[file_name]["end"] = 0
+            partition_inf[file_name]["task_size"] = 0
         partition_inf[file_name]["start"] = min(partition_inf[file_name]["start"], _start)
         partition_inf[file_name]["end"] = max(partition_inf[file_name]["end"], _end)
+        partition_inf[file_name]["task_size"] = max(partition_inf[file_name]["task_size"], task_size)
     f.close()
     for file in partition_inf:
         partition_inf[file]["size"] = partition_inf[file]["end"] - partition_inf[file]["start"]
@@ -93,7 +96,7 @@ def make_Tripod_input(i):
 
     # record
     f = open(result, "w+", encoding="utf-8")
-    f.write("stage_id,num_of_tasks,task_remote_duration,task_cached_duration,input_file,input_size")
+    f.write("stage_id,num_of_tasks,task_remote_duration,task_cached_duration,input_file,input_size, task_size\n")
     for stage in all_stages:
         num_of_tasks = duration_inf[stage]["num_of_tasks"]
         task_remote_duration = duration_inf[stage]["avg_remote_duration"]
@@ -101,10 +104,12 @@ def make_Tripod_input(i):
         input_file = ""
         input_size = 0
         start_range = 0
+        task_size = 0
         if stage in stages_has_input:
             assert 1 == len(stage_input[stage])
             input_file = stage_input[stage][0]
             input_size = partition_inf[input_file]["size"]
             start_range = partition_inf[input_file]["start"]
-        f.write("{},{},{},{},{},{}".format(stage, num_of_tasks, task_remote_duration, task_cached_duration, input_file,
-                                           start_range, input_size))
+            task_size = partition_inf[input_file]["task_size"]
+        f.write("{},{},{},{},{},{},{},{}\n".format(stage, num_of_tasks, task_remote_duration, task_cached_duration, input_file,
+                                           start_range, input_size, task_size))

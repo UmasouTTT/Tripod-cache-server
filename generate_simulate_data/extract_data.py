@@ -34,7 +34,7 @@ def trans_time(time_str):
     content = time_str.split(":")
     return int(content[0]) * 3600 + int(content[1]) * 60 + int(content[2])
 
-def extract_task_duration(file_path, is_remote):
+def extract_task_duration(file_path, out_path, is_remote):
     condition = "cached"
     if is_remote:
         condition = "remote"
@@ -79,7 +79,7 @@ def extract_task_duration(file_path, is_remote):
         print("Stage {} avg task time is {}".format(stage, whole_time / len(tasks_durations[stage])))
 
     # record
-    f = open(tasks_duration_path, "w+", )
+    f = open(out_path, "w+", encoding="utf-8")
     for stage in tasks_durations:
         for task in tasks_durations[stage]:
             f.write("{}:{}:{}:{}:{}\n".format(int(float(stage)), int(float(task)), tasks_durations[stage][task]["partition_id"],
@@ -91,8 +91,9 @@ def extract_task_duration(file_path, is_remote):
 query_index = 1
 # {filename:{partition_id:range}}
 partition_inf_path = "datas/{}/partition_inf".format(query_index)
-tasks_duration_path = "datas/{}/tasks_duration".format(query_index)
-extractPartialFiles("datas/{}/log.txt".format(query_index))
-extract_task_duration("datas/{}/log.txt".format(query_index), True)
-extract_task_duration("datas/{}/log_cached.txt".format(query_index), False)
+remote_duration_path = "datas/{}/tasks_duration".format(query_index)
+cached_duration_path = "datas/{}/cached_tasks_duration".format(query_index)
+extractPartialFiles("datas/{}/remote.log".format(query_index))
+extract_task_duration("datas/{}/remote.log".format(query_index), remote_duration_path, True)
+extract_task_duration("datas/{}/cached.log".format(query_index), cached_duration_path, False)
 make_Tripod_input(query_index)
