@@ -1,4 +1,5 @@
 import math
+import sys
 from time import *
 import boto3
 import fcntl
@@ -14,9 +15,11 @@ bucket_name = 'inputdata'
 
 Query_type = 1
 
-client = boto3.client(service_name='s3', aws_access_key_id=access_key, aws_secret_access_key=secret_key,
-                          endpoint_url=endpoint_url,
-                          verify=False, use_ssl=False)
+num_of_unit_slices = 512 / 32
+
+# client = boto3.client(service_name='s3', aws_access_key_id=access_key, aws_secret_access_key=secret_key,
+#                           endpoint_url=endpoint_url,
+#                           verify=False, use_ssl=False)
 
 stage_cached_partition = []
 prefetch_plan = None
@@ -60,20 +63,47 @@ def load_partial_object(key, range_start, end, belong_infs):
 
 def start(prefetch_files, num_of_stages):
     init(prefetch_files, num_of_stages)
+    slices = []
     for prefetch_plan in prefetch_files:
-        file_name = prefetch_plan[0]
-        start = prefetch_plan[1]
-        end = prefetch_plan[2]
-        belong_infs = prefetch_plan[3]
-        load_partial_object(file_name, start, end, belong_infs)
+
+        if 0 != len(slices):
+            # 512m or diff file
+            if num_of_unit_slices == len(slices) or prefetch_plan[0] != slices[0][0]:
+                # union files
+                file = slices[0][0]
+                start = slices[-1][1]
+                end = slices[0][2]
+                belong_infs = []
+                for slice in slices:
+                    belong_infs.extend(slice[3])
+                load_partial_object(file, start, end, belong_infs)
+                load_file("/proj/ccjs-PG0/tpch-spark/TripodConfig/stagesCachedCondition.txt")
+                # update
+                slices.clear()
+
+        slices.append(prefetch_plan)
+
+    if 0 != len(slices):
+        # union files
+        file = slices[0][0]
+        start = slices[-1][1]
+        end = slices[0][2]
+        belong_infs = []
+        for slice in slices:
+            belong_infs.extend(slice[3])
+        load_partial_object(file, start, end, belong_infs)
         load_file("/proj/ccjs-PG0/tpch-spark/TripodConfig/stagesCachedCondition.txt")
+        # update
+        slices.clear()
+
+
 
 def get_prefetch_files(file_path):
     f = open(file_path, "r+", encoding="utf8")
     prefetch_files = []
     for line in f:
         content = line.strip().split(",")
-        file_name = content[0].split("/")[-1]
+        file_name = content[0]
 
         range = content[1]
         start = int(range.split("-")[0])
@@ -90,16 +120,18 @@ def get_prefetch_files(file_path):
     f.close()
     return prefetch_files
 
-if Query_type == 1:
-    # # prefetch_files: [[filename, stage_id, start, end, partition_id]...]
-    num_of_stages = 4
-    file_path = "../generate_simulate_data/datas/1/cache_plan"
-    start_time = time.time()
-    prefetch_files = get_prefetch_files(file_path)
-    start(prefetch_files, 4)
-    end_time = time.time()
-    print(end_time - start_time)
-    print(stage_cached_partition)
+# param
+Query_idx = 20
+
+# # prefetch_files: [[filename, stage_id, start, end, partition_id]...]
+num_of_stages = 8
+file_path = "../generate_simulate_data/datas/{}/cache_plan.txt".format(Query_idx)
+start_time = time.time()
+prefetch_files = get_prefetch_files(file_path)
+start(prefetch_files, num_of_stages)
+end_time = time.time()
+print(end_time - start_time)
+print(stage_cached_partition)
 
 
 
