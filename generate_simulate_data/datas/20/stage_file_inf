@@ -1,0 +1,5 @@
+0://inputdata/nation.tbl
+1://inputdata/supplier.tbl
+3://inputdata/partsupp.tbl
+4://inputdata/part.tbl
+6://inputdata/lineitem.tbl

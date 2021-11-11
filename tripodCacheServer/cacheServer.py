@@ -11,7 +11,7 @@ access_key = "4OJ6S588FKUF9X55IEX4"
 secret_key = "CU3NQAPy8qhe12z3TPPHzHwpcXH39xw635ukS0Lk"
 endpoint_url = "http://10.10.1.1:8080"
 
-bucket_name = 'inputdata'
+bucket_name = 'testuserinputdata'
 
 Query_type = 1
 
@@ -40,7 +40,8 @@ def load_file(file_path):
         fcntl.flock(f, fcntl.LOCK_EX)
         for stage_inf in stage_cached_partition:
             if 1 == len(stage_inf):
-                continue
+                cached_partitions = str(stage_inf[0]) + ":\n"
+                f.write(cached_partitions)
             else:
                 cached_partitions = str(stage_inf[0]) + ":" + str(stage_inf[1])
                 for partition in stage_inf[2:]:
@@ -76,8 +77,11 @@ def start(prefetch_files, num_of_stages):
                 belong_infs = []
                 for slice in slices:
                     belong_infs.extend(slice[3])
-                load_partial_object(file, start, end, belong_infs)
-                load_file("/proj/ccjs-PG0/tpch-spark/TripodConfig/stagesCachedCondition.txt")
+                try:
+                    load_partial_object(file, start, end, belong_infs)
+                    load_file("/proj/ccjs-PG0/tpch-spark/TripodConfig/stagesCachedCondition.txt")
+                except:
+                    pass
                 # update
                 slices.clear()
 
@@ -121,10 +125,10 @@ def get_prefetch_files(file_path):
     return prefetch_files
 
 # param
-Query_idx = 20
+Query_idx = 8
 
 # # prefetch_files: [[filename, stage_id, start, end, partition_id]...]
-num_of_stages = 8
+num_of_stages = 16
 file_path = "../generate_simulate_data/datas/{}/cache_plan.txt".format(Query_idx)
 start_time = time.time()
 prefetch_files = get_prefetch_files(file_path)

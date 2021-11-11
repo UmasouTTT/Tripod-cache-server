@@ -1,8 +1,6 @@
 import os
 from makeTripodInput import *
 
-
-
 def extractPartialFiles(file_path):
     f = open(file_path, "r+", encoding="utf-8")
     partial_files = {}
@@ -88,7 +86,7 @@ def extract_task_duration(file_path, out_path, is_remote):
     f.close()
 
 
-query_index = 1
+query_index = 8
 # {filename:{partition_id:range}}
 partition_inf_path = "datas/{}/partition_inf".format(query_index)
 remote_duration_path = "datas/{}/tasks_duration".format(query_index)

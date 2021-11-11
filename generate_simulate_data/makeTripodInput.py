@@ -1,6 +1,6 @@
 num_of_querys = 2
 import sys
-
+result_path = "/proj/ccjs-PG0/CtacsHeuristic/Simulator/tpch/tripod_cache_inf/"
 
 
 def make_Tripod_input(i):
@@ -9,7 +9,7 @@ def make_Tripod_input(i):
     cached_duration_inf_path = "datas/{}/cached_tasks_duration".format(i)
     stage_input_inf = "datas/{}/stage_file_inf".format(i)
     all_stages = set()
-    result = "datas/{}/{}".format(i, i)
+    result = result_path + str(i)
 
     partition_inf = {}
     duration_inf = {}
@@ -19,7 +19,7 @@ def make_Tripod_input(i):
     f = open(partition_inf_path, "r+", encoding="utf-8")
     for line in f:
         content = line.strip().split(":")
-        file_name = content[0]
+        file_name = content[0].split("/")[-1]
         _range = content[-1]
         _start = int(_range.split("-")[0])
         task_size = int(_range.split("-")[1])
@@ -90,10 +90,10 @@ def make_Tripod_input(i):
         if stage_id not in stage_input:
             stage_input[stage_id] = []
         for file in files:
-            stage_input[stage_id].append(file)
+            stage_input[stage_id].append(file.split("/")[-1])
         stages_has_input.add(stage_id)
     f.close()
-
+    print("stages has input are {}".format(stages_has_input))
     # record
     f = open(result, "w+", encoding="utf-8")
     f.write("stage_id,num_of_tasks,task_remote_duration,task_cached_duration,input_file,input_size, task_size\n")
